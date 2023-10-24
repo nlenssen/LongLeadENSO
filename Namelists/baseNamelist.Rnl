@@ -1,0 +1,142 @@
+# Load all of the packages/standard R functions as I'm running this code in
+# --vanilla often for parallelization purposes
+library(ncdf4)
+library(fields)
+library(RColorBrewer)
+library(zoo)
+library(abind)
+library(foreach)
+library(doParallel)
+library(colorout)
+
+source('Code/Functions.R')
+source('/Users/nale4362/ConfigResources/GlobalFunctions.R')
+
+# the path to the master data directory
+ddir   <- '/Users/nale4362/Documents/AnalogueData'
+
+# set path to the codebase
+cdir <- 'Code'
+
+# Other paths of relevance
+obsFile <- sprintf('%s/Observations/obsDataList_2x2.Rda',ddir)
+
+# Some stuff for parallelization
+nCores_step02 <- 4
+
+# ###############################################################################
+# # KEY THINGS TO CHANGE (OR MOVE TO A LOOP) HERE
+# ###############################################################################
+# # the model used for the analog library
+# modelName <- 'CESM1-1-CAM5-CMIP5'
+
+# # fields used for fitting analogs
+# trialFields <- c('tos', 'zos')
+
+# # Experiment to pull the key info for the initalization
+# initModelName <- 'CESM1-1-CAM5-CMIP5'
+# initExperimentName <- 'tos_zos_NEW'
+
+
+###############################################################################
+# Set up key directories
+###############################################################################
+
+# Set up the all-important wdir (working directory) based on the experiment/model
+# used (perfect model first)
+if(initModelName == modelName){
+	perfectModel <- TRUE
+	experimentName <- sprintf('%s', paste(trialFields, collapse='_'))	
+} else{
+	perfectModel <- FALSE
+	experimentName <- sprintf('CrossPerfectModel_%s_%s', initModelName, paste(trialFields, collapse='_'))	
+}
+
+wdir <- sprintf('%s/%s/experiments/%s_NEW',ddir, modelName, experimentName)
+
+# Create directories if needed
+if(!dir.exists(wdir)) dir.create(wdir, recursive = TRUE)
+if(!dir.exists(sprintf('%s/TestFigures',wdir))) dir.create(sprintf('%s/TestFigures',wdir))
+
+###############################################################################
+# Get info about the initalization/verification model run
+###############################################################################
+
+# Ran the init all in this experiment to get things set up properly so hard coded
+# directories here
+initDir <- sprintf('%s/%s/experiments/%s', ddir, initModelName, 'CrossPerfectModel_CESM1-1-CAM5-CMIP5_tos_zos_NEW')
+initInfoObject <- sprintf('%s/step01_InitVerifInfo.Rda',initDir)
+
+if(!file.exists(initInfoObject)){
+	# Add code here eventually to make the init info object for other models
+	# if needed	(should also just happen when we run the code for other 
+	# experiments)
+}
+
+# hard code in where to get the step01 info from the library for now
+load(initInfoObject)
+
+# get the key info from this cleaned data
+initTimeMap <- timeMap
+
+# get the verificaiton nino3.4 and event vectors
+trueNino34   <- nino34
+trueEventVec <- eventVec
+
+# get the variance of the init/verif fields (currently both for sst and ssh)
+targetSigma <- trialSigma
+
+rm(timeMap, nino34, eventVec, trialSigma)
+
+
+###############################################################################
+# Step 2 Params
+###############################################################################
+# Length of the analogue forecast to save
+forecastLength <- 5*12-1
+
+
+# indopacific domain for fitting analogs
+targetLon <- c(30,360-80)
+targetLat <- c(-30,30)
+
+# Nino 3.4 coords
+nino34Lon <- c(360-170,360-120)
+nino34Lat <- c(-5,5)
+
+# size of the analogue (ranked error vec) and the forecast ensemble size
+analogueSize <- 50
+ensembleSize <- 15
+
+
+###############################################################################
+# Get some basics from the library model data
+###############################################################################
+handle <- nc_open(sprintf('%s/%s/tos_anomaly_%s.nc',ddir,modelName,modelName))
+
+lon <- ncvar_get(handle,'lon')
+
+lat <- ncvar_get(handle,'lat')
+time <- ncvar_get(handle,'time')
+
+nlon <- length(lon)
+nlat <- length(lat)
+nt <- length(time)
+nYear <- nt/12
+
+nc_close(handle)
+
+# make a timeMap in the traditional way
+timeMap <- cbind(rep(1:nYear,each=12), rep(1:12,times=nYear), NA)
+timeMap[,3] <- timeMap[,1] + (timeMap[,2]-1)/12
+
+# new stuff added for the function
+trialFields <- c('tos', 'zos')
+forecastFieldNames <- c('tos')
+
+# get the relevant subset of lon/lat
+lonInds <- which(lon > min(targetLon) & lon < max(targetLon))
+latInds <- which(lat > min(targetLat) & lat < max(targetLat))
+
+subLon <- lon[lonInds]
+subLat <- lat[latInds]
