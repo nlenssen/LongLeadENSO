@@ -2,25 +2,30 @@ modelNameVec <- c('CM4',
 	'ESM4',
 	'CanESM5',
 	'MIROC6',
-	'CESM1-1-CAM5-CMIP5', # already ran
+	'CESM1-1-CAM5-CMIP5',
 	'CESM2', 
-	# 'GISS-E3', # too little data
 	'GISS-E21G', 
-	# 'GISS-E21H', # too little data
 	'CESM1-NMME', 
 	'CCSM4-NMME',
-	'CM2.1-NMME', # rerunning overnight as it is huge (4000 years)
+	'CM2.1-NMME', 
 	'CM2.5-NMME')
 nModels <- length(modelNameVec)
 
-plotdir <- '~/Desktop/scratchFigures/ensoPaper/Fig01'
-if(!dir.exists(plotdir)) dir.create(plotdir)
 
-plotdirFinal <- '~/Desktop/scratchFigures/ensoPaper/finalFigures'
 
+
+if(!exists('baseplotdir')){
+	baseplotdir <- '~/Dropbox/CUBoulder/EnsoPaper'
+	if(!dir.exists(baseplotdir)) dir.create(baseplotdir, recursive = TRUE)
+}
+
+if(!exists('plotdirFinal')){
+	plotdirFinal <- '~/Dropbox/CUBoulder/EnsoPaper/finalFigures'
+	if(!dir.exists(plotdirFinal)) dir.create(plotdirFinal, recursive = TRUE)
+}
 
 # Stuff for file paths from namelist
-ddir   <- '/Users/nale4362/Documents/AnalogueData'
+ddir   <- '/Users/nale4362/Data/AnalogueData'
 trialFields <- c('tos', 'zos')
 
 # Other relevant vars from the namelist
@@ -137,107 +142,6 @@ subInds <- which(0:forecastLength < maxInd+1)
 pal <- 1:nModels
 
 
-pdf(sprintf('%s/01RpssFigs.pdf',plotdir),21,12)
-par(mfrow=c(2,3))
-
-##########
-# plotting the perfect model skill
-##########
-plot(NULL, xlab='Lead (months)', ylab='RPSS',
-		xaxp = c(0, maxInd, 6), xlim=c(0,maxInd), ylim=c(-0.2, 1.0),
-		main='DJF Probabilistic ENSO Skill (Perfect Model)')
-
-abline(h=0)
-for(i in 1:nModels){
-	points(xVec, rpssListPerfect[[i]][1,subInds],type='o',lwd=2,col=pal[i],pch=rep(c(i,rep(NA,5)),maxInd/6))
-}
-
-legend(24,1.05,modelNameVec,col=pal, pch=1:nModels, lwd=2,bty='n')
-
-##########
-# cross model #1
-##########
-plot(NULL, xlab='Lead (months)', ylab='RPSS',
-		xaxp = c(0, maxInd, 6), xlim=c(0,maxInd), ylim=c(-0.2, 1.0),
-		main='DJF Probabilistic ENSO Skill (Cross-Model, CESM1.1-CAM5-CMIP5)')
-
-abline(h=0)
-for(i in 1:nModels){
-	# if(modelNameVec[[i]] == 'CESM1-NMME' | modelNameVec[[i]] == 'CESM1-1-CAM5-CMIP5') next()
-	points(xVec, rpssListCross[[i]][1,subInds],type='o',lwd=2,col=pal[i],pch=rep(c(i,rep(NA,5)),maxInd/6))
-}
-
-legend(24,1.05,modelNameVec,col=pal, pch=1:nModels, lwd=2,bty='n')
-
-##########
-# cross model #2
-##########
-plot(NULL, xlab='Lead (months)', ylab='RPSS',
-		xaxp = c(0, maxInd, 6), xlim=c(0,maxInd), ylim=c(-0.2, 1.0),
-		main='DJF Probabilistic ENSO Skill (Cross-Model, GISS-E21G)')
-
-abline(h=0)
-for(i in 1:nModels){
-	# if(modelNameVec[[i]] == 'CESM1-NMME' | modelNameVec[[i]] == 'CESM1-1-CAM5-CMIP5') next()
-	points(xVec, rpssListCross2[[i]][1,subInds],type='o',lwd=2,col=pal[i],pch=rep(c(i,rep(NA,5)),maxInd/6))
-}
-
-legend(24,1.05,modelNameVec,col=pal, pch=1:nModels, lwd=2,bty='n')
-
-
-##########
-# plotting the perfect model decomp
-##########
-plot(NULL, xlab='Lead (months)', ylab='Resolution/Reliability',
-		xaxp = c(0, maxInd, 6), xlim=c(0,maxInd), ylim=c(-0.1, 0.5),
-		main='RPSS Decomposition (Perfect Model)')
-
-abline(h=0)
-for(i in 1:nModels){
-	points(xVec, resListPerfect[[i]][1,subInds],type='o',lwd=2,col=pal[i],pch=rep(c(i,rep(NA,5)),maxInd/6))
-	points(xVec, - relListPerfect[[i]][1,subInds],type='o',lwd=2,col=pal[i],pch=rep(c(i,rep(NA,5)),maxInd/6),lty=2)
-}
-
-legend(24,0.525,modelNameVec,col=pal, pch=1:nModels, lwd=2,bty='n')
-
-##########
-# cross model #1 decomp
-##########
-plot(NULL, xlab='Lead (months)', ylab='Resolution/Reliability',
-		xaxp = c(0, maxInd, 6), xlim=c(0,maxInd), ylim=c(-0.1, 0.5),
-		main='RPSS Decomposition (Cross-Model, CESM1.1-CAM5-CMIP5)')
-
-abline(h=0)
-for(i in 1:nModels){
-	# if(modelNameVec[[i]] == 'CESM1-NMME' | modelNameVec[[i]] == 'CESM1-1-CAM5-CMIP5') next()
-	points(xVec, resListCross[[i]][1,subInds],type='o',lwd=2,col=pal[i],pch=rep(c(i,rep(NA,5)),maxInd/6))
-	points(xVec, - relListCross[[i]][1,subInds],type='o',lwd=2,col=pal[i],pch=rep(c(i,rep(NA,5)),maxInd/6),lty=2)
-}
-
-legend(24,0.525,modelNameVec,col=pal, pch=1:nModels, lwd=2,bty='n')
-
-##########
-# cross model #2 decomp
-##########
-plot(NULL, xlab='Lead (months)', ylab='Resolution/Reliability',
-		xaxp = c(0, maxInd, 6), xlim=c(0,maxInd), ylim=c(-0.1, 0.5),
-		main='RPSS Decomposition (Cross-Model, CESM1.1-CAM5-CMIP5)')
-
-abline(h=0)
-for(i in 1:nModels){
-	# if(modelNameVec[[i]] == 'CESM1-NMME' | modelNameVec[[i]] == 'CESM1-1-CAM5-CMIP5') next()
-	points(xVec, resListCross2[[i]][1,subInds],type='o',lwd=2,col=pal[i],pch=rep(c(i,rep(NA,5)),maxInd/6))
-	points(xVec, - relListCross2[[i]][1,subInds],type='o',lwd=2,col=pal[i],pch=rep(c(i,rep(NA,5)),maxInd/6),lty=2)
-}
-
-legend(24,0.525,modelNameVec,col=pal, pch=1:nModels, lwd=2,bty='n')
-
-
-dev.off()
-
-
-
-
 ##########
 # New Figure 1a
 ##########
@@ -245,23 +149,29 @@ maxInd <- 36
 xVec <- 0:maxInd
 subInds <- which(0:forecastLength < maxInd+1)
 
+textSize <- 1.5
+
 # set plotting parameters
-pal <- 1:nModels
+
 
 pdf(sprintf('%s/Figure_01_a.pdf',plotdirFinal),7,7)
+# b,l,t,r Default: c(5, 4, 4, 2) + 0.1
+par(mar=c(5, 4.5, 4, 2) + 0.1)
 plot(NULL, xlab='Lead (months)', ylab='RPSS',
 		xaxp = c(0, maxInd, 6), xlim=c(0,maxInd), ylim=c(-0.2, 1.0),
-		main='DJF Probabilistic ENSO Skill (Perfect Model)')
+		main='DJF Probabilistic ENSO Skill (Perfect Model)',
+		cex.lab=textSize, cex.axis=textSize, cex.main=textSize, cex.sub=textSize)
 
 abline(h=0)
 abline(v=c(12,24),lty=3)
 
 for(i in 1:nModels){
-	points(xVec, rpssListPerfect[[i]][1,subInds],type='o',lwd=2,col=pal[i],pch=rep(c(i,rep(NA,5)),maxInd/6))
+	points(xVec, rpssListPerfect[[i]][1,subInds],type='o',lwd=3, cex=1.5,
+		col=qualPal[i],pch=rep(c(i,rep(NA,5)),maxInd/6))
 }
 
-legend(14,1.05,modelNameVec,col=pal, pch=1:nModels, lwd=2,bty='n')
-legend(-3.34, 1.08, '(a)', bty='n')
+legend(17,1.06,modelNameVec,col=qualPal, pch=1:nModels, lwd=3,bty='n', cex = 1.2)
+legend(-3.34, 1.08, '(a)', bty='n', cex = textSize)
 dev.off()
 
 
@@ -271,19 +181,22 @@ dev.off()
 ##########
 
 pdf(sprintf('%s/Figure_03_a.pdf',plotdirFinal),7,7)
+par(mar=c(5, 4.5, 4, 2) + 0.1)
 plot(NULL, xlab='Lead (months)', ylab='RPSS',
 		xaxp = c(0, maxInd, 6), xlim=c(0,maxInd), ylim=c(-0.2, 1.0),
-		main='DJF Probabilistic ENSO Skill (Cross-Model, GISS-E21G)')
+		main='DJF ENSO Skill (Cross-Model, GISS-E21G)',
+		cex.lab=textSize, cex.axis=textSize, cex.main=textSize, cex.sub=textSize)
 
 abline(h=0)
 abline(v=c(12,24),lty=3)
 for(i in 1:nModels){
 	# if(modelNameVec[[i]] == 'CESM1-NMME' | modelNameVec[[i]] == 'CESM1-1-CAM5-CMIP5') next()
-	points(xVec, rpssListCross2[[i]][1,subInds],type='o',lwd=2,col=pal[i],pch=rep(c(i,rep(NA,5)),maxInd/6))
+	points(xVec, rpssListCross2[[i]][1,subInds],type='o',lwd=3, cex=1.5,
+		col=qualPal[i],pch=rep(c(i,rep(NA,5)),maxInd/6))
 }
 
-legend(18,1.05,modelNameVec,col=pal, pch=1:nModels, lwd=2,bty='n')
-legend(-3.34, 1.08, '(a)', bty='n')
+legend(17,1.06,modelNameVec,col=qualPal, pch=1:nModels, lwd=2,bty='n', cex = 1.2)
+legend(-3.34, 1.08, '(a)', bty='n', cex = textSize)
 dev.off()
 
 
@@ -292,58 +205,22 @@ dev.off()
 # New Figure 3d
 ##########
 pdf(sprintf('%s/Figure_03_d.pdf',plotdirFinal),7,7)
+par(mar=c(5, 4.5, 4, 2) + 0.1)
 plot(NULL, xlab='Lead (months)', ylab='RPSS',
 		xaxp = c(0, maxInd, 6), xlim=c(0,maxInd), ylim=c(-0.2, 1.0),
-		main='DJF Probabilistic ENSO Skill (Cross-Model, CESM1.1-CAM5-CMIP5)')
+		main='DJF ENSO Skill (Cross-Model, CESM1.1)',
+		cex.lab=textSize, cex.axis=textSize, cex.main=textSize, cex.sub=textSize)
 
 abline(h=0)
 abline(v=c(12,24),lty=3)
 
 for(i in 1:nModels){
 	# if(modelNameVec[[i]] == 'CESM1-NMME' | modelNameVec[[i]] == 'CESM1-1-CAM5-CMIP5') next()
-	points(xVec, rpssListCross[[i]][1,subInds],type='o',lwd=2,col=pal[i],pch=rep(c(i,rep(NA,5)),maxInd/6))
+	points(xVec, rpssListCross[[i]][1,subInds],type='o',lwd=3, cex=1.5,
+		col=qualPal[i],pch=rep(c(i,rep(NA,5)),maxInd/6))
 }
 
-legend(18,1.05,modelNameVec,col=pal, pch=1:nModels, lwd=2,bty='n')
-legend(-3.34, 1.08, '(d)', bty='n')
+legend(17,1.06,modelNameVec,col=qualPal, pch=1:nModels, lwd=2,bty='n', cex = 1.2)
+legend(-3.34, 1.08, '(d)', bty='n', cex = textSize)
 dev.off()
 
-
-
-###############################################################################
-# Figure 1: Scatter of Perfect model v Cross model skill at various leads
-###############################################################################
-
-# leadVec <- (0:24)+1
-# plotLeads <- seq(3,24,by=3) + 1
-# rSqVec <- rep(NA, length(leadVec))
-
-# par(mfrow=c(2,4))
-
-# for(j in 1:length(leadVec)){
-
-# 	plotMat <- matrix(NA, nModels,2)
-# 	for(i in 1:nModels){
-# 		plotMat[i,1] <- rpssListPerfect[[i]][1,leadVec[j]]
-# 		plotMat[i,2] <- rpssListCross[[i]][1,leadVec[j]]
-		
-# 	}	
-# 	rSqVec[j] <- cor(plotMat)[1,2]^2
-		
-# 	if(j %in% plotLeads){
-# 		plot(NULL, xlab='Perfect Model RPSS', ylab='Cross-model RPSS',
-# 		main=sprintf('Lead %02d',leadVec[j]-1),
-# 		xlim=c(-0.2,1), ylim=c(-0.2,1))
-
-# 		points(plotMat,col=1:nModels,pch=1:nModels)
-
-# 		abline(h=0, lty=3)
-# 		abline(v=0, lty=3)
-# 		abline(0,1,lty=1)
-# 		legend(-0.2,1,modelNameVec,col=pal, pch=1:nModels, lwd=2,bty='n')
-# 		legend('bottomright',sprintf('R-Squared: %.02f', rSqVec[j]),bty='n')
-# 	}
-# }
-
-# check 
-# plot(leadVec-1, rSqVec, type='b')
